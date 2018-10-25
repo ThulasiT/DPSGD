@@ -6,7 +6,7 @@ if [ `id -u` != 0 ]; then
   sudo echo "Success"
 fi
 
-DATASET="ml-20m"
+DATASET="ml-1m"
 
 BUCKET=${BUCKET:-""}
 ROOT_DIR="${BUCKET:-/tmp}/MLPerf_NCF"
@@ -43,14 +43,9 @@ do
   MODEL_DIR="${TEST_DIR}/model_dir_${i}"
 
   RUN_LOG="${LOCAL_TEST_DIR}/run_${i}.log"
-  export COMPLIANCE_FILE="${LOCAL_TEST_DIR}/run_${i}_compliance_raw.log"
-  export STITCHED_COMPLIANCE_FILE="${LOCAL_TEST_DIR}/run_${i}_compliance_submission.log"
   echo ""
   echo "Beginning run ${i}"
   echo "  Complete output logs are in ${RUN_LOG}"
-  echo "  Compliance logs: (submission log is created after run.)"
-  echo "    ${COMPLIANCE_FILE}"
-  echo "    ${STITCHED_COMPLIANCE_FILE}"
 
   # To reduce variation set the seed flag:
   #   --seed ${i}
@@ -64,15 +59,14 @@ do
                      --dataset ${DATASET} --hooks "" \
                      ${DEVICE_FLAG} \
                      --clean \
-                     --train_epochs 20 \
+                     --train_epochs 5 \
                      --batch_size 2048 \
                      --eval_batch_size 100000 \
                      --learning_rate 0.0005 \
                      --layers 256,256,128,64 --num_factors 64 \
                      --hr_threshold 0.635 \
-                     --ml_perf \
  |& tee ${RUN_LOG} \
- | grep --line-buffered  -E --regexp="(Iteration [0-9]+: HR = [0-9\.]+, NDCG = [0-9\.]+)|(pipeline_hash)|(MLPerf time:)"
+ | grep --line-buffered  -E --regexp="(Iteration [0-9]+: HR = [0-9\.]+, NDCG = [0-9\.]+)|(Init TPU system)|(Initialized TPU in)"
 
   END_TIME=$(date +%s)
   echo "Run ${i} complete: $(( $END_TIME - $START_TIME )) seconds."
